@@ -2,7 +2,7 @@ import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { loginUser } from "../services/authService";
-
+ import { toast } from "react-toastify";
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -27,9 +27,11 @@ const Login = () => {
     try {
       const data = await loginUser(formData); // Call backend
       login(data); // Save to context + localStorage
+       toast.success("🎉 Registration successful! Welcome!");
       navigate("/"); // Redirect to Home or dashboard
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
+        toast.error(err.response?.data?.message || "Registration failed");
     }
   };
 

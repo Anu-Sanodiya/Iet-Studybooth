@@ -167,7 +167,7 @@ const FileIcon = ({ fileType }) => {
 // --- NEW: Header Component for Navigation ---
 const Header = ({ currentView, onNavigate }) => {
   const commonButtonClass = "flex items-center px-4 py-2 rounded-lg font-medium transition duration-200";
-  const activeButtonClass = "bg-blue-600 text-white shadow-md";
+  const activeButtonClass = "bg-[#001845] text-[#979dac] shadow-md";
   const inactiveButtonClass = "bg-white text-gray-700 hover:bg-gray-100 shadow-sm border";
 
   return (

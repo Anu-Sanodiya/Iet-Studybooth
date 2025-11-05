@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Register from "./components/Register";
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
@@ -10,6 +12,8 @@ import Contact from "./components/contact";
 import About from "./components/About";
 import Upload from "./components/upload";
 import { useNavigate } from "react-router-dom";
+import FacultyPage from "./components/faculty";
+import Footer from "./components/footer";
 const Home = () => {
   const navigate = useNavigate();
 
@@ -47,7 +51,7 @@ const Home = () => {
    
       <Outlet />
     </main>
-   
+     <Footer />
   </div>
   )
 };
@@ -62,11 +66,13 @@ const Layout = () => (
     <main className="relative z-20 pt-20">
       <Outlet />
     </main>
+    
+   
   </div>
 );
 function App() {
   return (
-   
+   <>
   <Routes>
     <Route element={<Layout />}>
       <Route index element={<Home />} />
@@ -77,9 +83,12 @@ function App() {
       <Route path="curriculum" element={<Curriculum />} />
       <Route path="contact" element={<Contact />} />
       <Route path="upload" element={<Upload />} />
+      <Route path="faculty" element ={<FacultyPage />} />
     </Route>
-  </Routes>
 
+  </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
+</>
    
     
   );

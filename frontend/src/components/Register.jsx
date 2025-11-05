@@ -2,7 +2,7 @@ import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { registerUser } from "../services/authService";
-
+ import { toast } from "react-toastify";
 const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -31,9 +31,12 @@ const Register = () => {
     try {
       const data = await registerUser(formData); // Call backend register API
       login(data); // Automatically login the user after registration
+         toast.success("🎉 Registration successful! Welcome!");
       navigate("/"); // Redirect to home/dashboard
+      
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
+      toast.error(err.response?.data?.message || "Registration failed");
     }
   };
 
