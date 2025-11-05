@@ -8,7 +8,7 @@ import StudyMaterials from "./components/StudyMaterials";
 import Curriculum from './components/Curriculum'
 import Contact from "./components/contact";
 import About from "./components/About";
-// import Upload from "./components/upload";
+import Upload from "./components/upload";
 import { useNavigate } from "react-router-dom";
 const Home = () => {
   const navigate = useNavigate();
@@ -54,22 +54,32 @@ const Home = () => {
 
 
 
-
+const Layout = () => (
+  <div className="w-full min-h-screen relative">
+    <div className="fixed top-0 left-0 w-full z-40">
+      <Navbar />
+    </div>
+    <main className="relative z-20 pt-20">
+      <Outlet />
+    </main>
+  </div>
+);
 function App() {
   return (
-    <Routes>
    
-     
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/materials" element={<StudyMaterials />} />
-<Route path="/curriculum" element={<Curriculum />} />
+  <Routes>
+    <Route element={<Layout />}>
+      <Route index element={<Home />} />
+      <Route path="about" element={<About />} />
+      <Route path="register" element={<Register />} />
+      <Route path="login" element={<Login />} />
+      <Route path="materials" element={<StudyMaterials />} />
+      <Route path="curriculum" element={<Curriculum />} />
+      <Route path="contact" element={<Contact />} />
+      <Route path="upload" element={<Upload />} />
+    </Route>
+  </Routes>
 
-<Route path="/contact" element={<Contact />} />
-
-      </Routes>
    
     
   );

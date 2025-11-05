@@ -1,16 +1,16 @@
 
 const express = require('express');
 const router = express.Router();
-const { upload } = require('../middleware/upload');
-const { requireAuth } = require('../middleware/auth');
+const { uploadSingle } = require('../middlewares/upload');
+const requireAuth = require('../middlewares/auth.middleware');
 const { asyncHandler } = require('../utils/asyncHandler');
-const ctrl = require('../controllers/material.controller');
+const ctrl = require('../controllers/studymaterials.controller');
 
 // Create/upload
 router.post(
   '/',
   requireAuth,
-  upload.single('file'), // the form field name must be `file`
+ uploadSingle, // the form field name must be `file`
   asyncHandler(ctrl.createMaterial)
 );
 

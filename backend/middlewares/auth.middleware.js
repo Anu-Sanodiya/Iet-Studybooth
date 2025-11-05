@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 
-exports.isAuthenticated = async (req, res, next) => {
+// Middleware exported as the default require target.
+async function requireAuth(req, res, next) {
     console.log("Incoming Cookies:", req.cookies);
     // First try Authorization header (Bearer <token>), then fallback to cookie
     let token;
@@ -21,7 +22,7 @@ exports.isAuthenticated = async (req, res, next) => {
 
     try {
         console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         console.log("Decoded Token:", decoded);
 
         req.user = await User.findById(decoded.id).select('-password');
@@ -37,4 +38,6 @@ exports.isAuthenticated = async (req, res, next) => {
         console.error("Token verification error:", error);
         res.status(401).json({ message: 'Not authorized, token failed' });
     }
-};
+}
+
+module.exports = requireAuth;

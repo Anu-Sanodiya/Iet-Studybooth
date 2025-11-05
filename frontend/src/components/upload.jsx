@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Download, Search, XCircle, FileText, BookOpen, ArrowLeft, 
   Laptop, Network, HardHat, Cog, CircuitBoard, Brain, Zap,
-  Upload, Home, PlusCircle
+  UploadIcon, Home, PlusCircle
 } from 'lucide-react';
 
 // --- HIERARCHICAL MOCK DATA (Initial State) ---
@@ -185,7 +185,7 @@ const Header = ({ currentView, onNavigate }) => {
           onClick={() => onNavigate('uploader')}
           className={`${commonButtonClass} ${currentView === 'uploader' ? activeButtonClass : inactiveButtonClass}`}
         >
-          <Upload className="w-5 h-5 mr-2" />
+          <UploadIcon className="w-5 h-5 mr-2" />
           Upload
         </button>
       </div>
@@ -318,7 +318,7 @@ const Uploader = ({ departments, onUploadSuccess, notify }) => {
               </>
             ) : (
               <>
-                <Upload className="w-5 h-5 mr-2" />
+                <UploadIcon className="w-5 h-5 mr-2" />
                 Upload Material
               </>
             )}
@@ -551,3 +551,158 @@ const Upload = () => {
 
 export default Upload;
 
+
+
+// import { useState, useEffect, useContext } from 'react';
+// import { AuthContext } from '../context/AuthContext';
+// import { getMaterials, downloadMaterial } from '../services/materialService'; // We'll need to create these
+// import { Download, Search, FileText, BookOpen, Trash2 } from 'lucide-react';
+
+// // Helper function to get the correct icon for the file
+// const FileIcon = ({ fileType }) => {
+//   const ext = fileType.toLowerCase();
+//   if (ext.includes('pdf')) {
+//     return <FileText className="text-red-500 w-5 h-5" />;
+//   }
+//   if (ext.includes('doc')) {
+//     return <BookOpen className="text-blue-500 w-5 h-5" />;
+//   }
+//   if (ext.includes('ppt')) {
+//     return <BookOpen className="text-orange-500 w-5 h-5" />;
+//   }
+//   return <FileText className="text-gray-500 w-5 h-5" />;
+// };
+
+// const MaterialList = () => {
+//   const { user } = useContext(AuthContext); // Get user for admin checks
+//   const [materials, setMaterials] = useState([]);
+//   const [filteredMaterials, setFilteredMaterials] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState('');
+//   const [search, setSearch] = useState('');
+
+//   // 1. Fetch all materials on component load
+//   useEffect(() => {
+//     const fetchMaterials = async () => {
+//       try {
+//         setLoading(true);
+//         const res = await getMaterials();
+//         setMaterials(res.data);
+//         setFilteredMaterials(res.data);
+//       } catch (err) {
+//         setError(err.message || 'Failed to fetch materials.');
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchMaterials();
+//   }, []);
+
+//   // 2. Filter materials when search changes
+//   useEffect(() => {
+//     const results = materials.filter(material => 
+//       material.subject.toLowerCase().includes(search.toLowerCase()) ||
+//       material.description.toLowerCase().includes(search.toLowerCase()) ||
+//       material.course.toLowerCase().includes(search.toLowerCase()) ||
+//       material.originalName.toLowerCase().includes(search.toLowerCase())
+//     );
+//     setFilteredMaterials(results);
+//   }, [search, materials]);
+
+//   // 3. Handle the download
+//   const handleDownload = async (materialId, originalName) => {
+//     try {
+//       const response = await downloadMaterial(materialId);
+      
+//       // Create a blob from the file data and trigger a download
+//       const blob = new Blob([response.data], { type: response.headers['content-type'] });
+//       const url = window.URL.createObjectURL(blob);
+//       const a = document.createElement('a');
+//       a.href = url;
+//       a.download = originalName; // Use the original file name
+//       document.body.appendChild(a);
+//       a.click();
+//       a.remove();
+//       window.URL.revokeObjectURL(url);
+
+//     } catch (err) {
+//       setError(err.message || 'Download failed.');
+//     }
+//   };
+  
+//   // We can add a delete handler here for admins later
+//   // const handleDelete = async (materialId) => { ... }
+
+//   if (loading) {
+//     return <div className="text-center p-10">Loading materials...</div>;
+//   }
+
+//   return (
+//     <div className="max-w-6xl mx-auto p-4">
+//       <h2 className="text-3xl font-bold mb-6 text-gray-800">Browse Study Materials</h2>
+      
+//       {/* Search Bar */}
+//       <div className="mb-8 relative">
+//         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+//         <input
+//           type="text"
+//           placeholder="Search by subject, course, description, or filename..."
+//           value={search}
+//           onChange={(e) => setSearch(e.target.value)}
+//           className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 text-base focus:ring-blue-500 focus:border-blue-500"
+//         />
+//       </div>
+
+//       {error && <p className="text-red-500 mb-4">{error}</p>}
+
+//       {/* Materials Grid */}
+//       {filteredMaterials.length > 0 ? (
+//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+//           {filteredMaterials.map((material) => (
+//             <div key={material._id} className="p-5 border rounded-lg shadow-lg bg-white flex flex-col">
+//               <div className="flex items-center mb-3">
+//                 <FileIcon fileType={material.originalName} />
+//                 <h3 className="font-bold text-xl ml-3 text-gray-800">{material.subject}</h3>
+//               </div>
+              
+//               <p className="text-blue-600 font-medium text-sm mb-2 uppercase">
+//                 {material.course || 'General'} - Sem {material.semester || 'N/A'}
+//               </p>
+              
+//               <p className="text-gray-600 flex-grow mb-4">{material.description || 'No description provided.'}</p>
+              
+//               <p className="text-gray-500 text-xs mt-auto mb-3" title={material.originalName}>
+//                 File: {material.originalName.length > 30 ? '...' + material.originalName.slice(-27) : material.originalName}
+//               </p>
+              
+//               <button
+//                 onClick={() => handleDownload(material._id, material.originalName)}
+//                 className="w-full bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center"
+//               >
+//                 <Download className="w-5 h-5 mr-2" />
+//                 Download
+//               </button>
+              
+//               {/* Show Delete button only to Admins */}
+//               {user && user.role === 'admin' && (
+//                 <button
+//                   // onClick={() => handleDelete(material._id)}
+//                   className="w-full bg-red-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-600 transition duration-300 flex items-center justify-center mt-2"
+//                 >
+//                   <Trash2 className="w-5 h-5 mr-2" />
+//                   Delete
+//                 </button>
+//               )}
+//             </div>
+//           ))}
+//         </div>
+//       ) : (
+//         <div className="p-10 text-center bg-gray-50 rounded-lg">
+//           <p className="text-xl text-gray-500">No materials found matching your search.</p>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default MaterialList;

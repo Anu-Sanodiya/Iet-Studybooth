@@ -34,7 +34,9 @@ const storage = multer.diskStorage({
 
 function fileFilter(req, file, cb) {
   if (!ALLOWED_MIME.has(file.mimetype)) {
-    return cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Unsupported file type'));
+    const err = new Error('Unsupported file type');
+    err.code = 'INVALID_FILE_TYPE';
+    return cb(err);
   }
   cb(null, true);
 }
