@@ -34,6 +34,9 @@ const Navbar = () => {
           <Link to="/contact" className="hover:underline">
             Contact
           </Link>
+           <Link to="/upload" className="hover:underline">
+            Upload File
+          </Link>
 
 
         </div>
