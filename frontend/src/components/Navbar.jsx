@@ -8,7 +8,7 @@ const Navbar = () => {
         <div className="flex flex-row items-center ml-[10px]">
           <img src={logo} alt="it logo" className="h-15 w-15 mr-4" />
         <Link to="/" className="text-l font-bold">
-         Institute of Engineering and Technology DAVV
+         Institute of Engineering & Technology DAVV
         </Link>
         </div>
 

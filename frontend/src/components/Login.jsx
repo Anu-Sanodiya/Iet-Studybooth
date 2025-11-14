@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { loginUser } from "../services/authService";
  import { toast } from "react-toastify";
+ import professorimage from '../assets/images/OJXK920.jpg'
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -37,7 +38,9 @@ const Login = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
+
       <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
+        
         <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
 
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}

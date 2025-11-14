@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const morgan = require('morgan');
 
 dotenv.config();
 
@@ -28,7 +29,7 @@ const connectDB = mustResolve('./config/db');
 const authRoutes = mustResolve('./routes/auth.routes');
 // If your real file is ./routes/studyMaterial.routes, switch the line below accordingly:
 const materialRoutes = mustResolve('./routes/material.routes');
-
+const studentRoutes=  mustResolve('./routes/student.routes');
 // Upload dir (make sure folder name matches: middleware vs middlewares)
 const { UPLOAD_DIR } = mustResolve('./middlewares/upload');
 
@@ -61,7 +62,7 @@ app.use(
 
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
-
+app.use(morgan('dev'));
 // Static uploads
 app.use(
   '/uploads',
@@ -77,7 +78,7 @@ app.use(
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/materials', materialRoutes);
-
+app.use('/api/student',studentRoutes);
 // Health
 app.get('/', (req, res) => res.json({ ok: true }));
 
