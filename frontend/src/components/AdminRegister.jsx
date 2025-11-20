@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // <-- Added
+import { Link, useNavigate } from 'react-router-dom';
+import { registerAdmin } from '../services/authService';
 import professorimage from "../assets/images/OJXK920.jpg";
 
 function AdminRegister() {
@@ -9,13 +10,16 @@ function AdminRegister() {
   const [department, setDepartment] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    // --- Validation ---
+    // --- Valida
+    // tion ---
     if (!name || !email || !password || !department) {
       setError('All fields are required.');
       return;
@@ -26,15 +30,24 @@ function AdminRegister() {
       return;
     }
 
-    // --- Submission (placeholder) ---
-    console.log('Registering admin:', { name, email, department });
-    // TODO: Send this data to your backend API
-
-    setSuccess('Admin registered successfully!');
-    setName('');
-    setEmail('');
-    setPassword('');
-    setDepartment('');
+    // --- Submit to backend ---
+    (async () => {
+      setIsSubmitting(true);
+      try {
+        const payload = { name, email, password, department };
+        const res = await registerAdmin(payload);
+        setSuccess('Admin registered successfully! Redirecting to login...');
+        // clear form
+        setName(''); setEmail(''); setPassword(''); setDepartment('');
+        // redirect to admin login after short delay
+        setTimeout(() => navigate('/adminlogin'), 900);
+      } catch (err) {
+        const msg = err?.response?.data?.message || err?.message || 'Registration failed';
+        setError(msg);
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
   };
 
   return (
@@ -150,15 +163,16 @@ function AdminRegister() {
 
             <button
               type="submit"
-              className="w-full rounded-md bg-blue-600 px-4 py-2 text-lg font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              disabled={isSubmitting}
+              className={`w-full rounded-md px-4 py-2 text-lg font-semibold text-white shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isSubmitting ? 'bg-gray-400 cursor-wait' : 'bg-blue-600 hover:bg-blue-700'}`}
             >
-              Register Admin
+              {isSubmitting ? 'Registering…' : 'Register Admin'}
             </button>
           </form>
 
           <p className="text-center text-md mt-6 text-gray-600">
             Already have an account?{" "}
-            <Link to="/adminlogin" className="text-blue-700 hover:underline font-bold">
+            <Link to="/admin/login" className="text-blue-700 hover:underline font-bold">
               Sign in
             </Link>
           </p>

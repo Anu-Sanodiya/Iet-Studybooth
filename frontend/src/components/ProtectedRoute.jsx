@@ -1,23 +1,36 @@
-// src/components/ProtectedRoute.js
+// src/components/ProtectedRoute.jsx
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
-  const { user } = useContext(AuthContext);
+  // 1. Extract loading state from Context (Ensure your Context provides this!)
+  const { user, loading } = useContext(AuthContext);
+  const location = useLocation();
 
-  // Not logged in? Redirect to login
-  if (!user) {
-    return <Navigate to="/adminlogin" replace />;
+  // 2. Prevent premature redirect while checking auth status
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
+if (!user) {
+   
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+}
 
-  // If adminOnly flag present, restrict further
-  if (adminOnly && user.role !== "admin") {
-    // You might adjust role logic to match your API/user schema
-    return <Navigate to="/" replace />;
+
+if (adminOnly && user.role !== "admin") {
+
+  const role = (user.role || "").toString().toLowerCase();
+  if (role !== "admin") {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
+}
 
-  // Authenticated (and admin, if needed)
+
   return children;
 };
 

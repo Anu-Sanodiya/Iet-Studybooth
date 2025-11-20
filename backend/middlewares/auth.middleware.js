@@ -39,5 +39,12 @@ async function requireAuth(req, res, next) {
         res.status(401).json({ message: 'Not authorized, token failed' });
     }
 }
+const requireAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next(); // User is admin, proceed
+    } else {
+        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+    }
+};
 
-module.exports = requireAuth;
+module.exports = { requireAuth, requireAdmin };

@@ -24,11 +24,32 @@ export const loginUser = async (userData) => {
   const response = await API.post(`${AUTH_BASE}/login`, userData);
   return response.data;
 };
+export const registerAdmin = async (adminData) => {
+  const response = await API.post(
+    `${AUTH_BASE}/admin/register`,
+    adminData,
+    {
+      headers: {
+        'x-admin-secret': import.meta.env.VITE_ADMIN_SECRET_KEY,
+      },
+    }
+  );
+
+  return response.data;
+};
+
 
 /**
- * Logs out the current user (clears server-side cookies/sessions if applicable).
- * Note: Local storage cleanup is handled by AuthContext.
+ * Logs an Admin in.
+ * @param {object} adminData - { email, password }.
+ * @returns {Promise<object>} Response data containing { user (role: admin), token }.
  */
+export const loginAdmin = async (adminData) => {
+  // Endpoint: /api/auth/admin/login
+  const response = await API.post(`${AUTH_BASE}/admin/login`, adminData);
+  return response.data;
+};
+
 export const logoutUser = async () => {
   // The API client handles: http://localhost:5000/api + AUTH_BASE + /logout
   await API.post(`${AUTH_BASE}/logout`);

@@ -1,42 +1,33 @@
-// middleware/upload.js
-const fs = require('fs');
-const path = require('path');
-const multer = require('multer');
-const crypto = require('crypto');
 
-// Ensure uploads dir exists
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
-// Allowed MIME types (extend as needed)
-const ALLOWED_MIME = new Set([
-  'application/pdf',                                            // .pdf
-  'application/vnd.ms-powerpoint',                              // .ppt
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
-  'application/vnd.ms-powerpoint.presentation.macroEnabled.12', // .pptm
-  'application/msword',                                         // .doc
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',   // .docx
-  'text/plain',                                                 // .txt
-]);
+// Allowed formats
+const ALLOWED_FORMATS = ["pdf", "ppt", "pptx", "doc", "docx", "txt"];
+
+
+const tempFolder = path.join(__dirname, "..", "temp");
+if (!fs.existsSync(tempFolder)) fs.mkdirSync(tempFolder);
+// Expose UPLOAD_DIR for other modules that expect it
+const UPLOAD_DIR = tempFolder;
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  destination: (req, file, cb) => {
+    cb(null, tempFolder);
+  },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname || '');
-    const safeExt = ext.toLowerCase().slice(0, 10); // keep extension short/safe
-    const stamp = Date.now();
-    const rand = crypto.randomBytes(6).toString('hex');
-    cb(null, `${stamp}-${rand}${safeExt}`);
+    const ext = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext);
+    cb(null, `${Date.now()}-${base}${ext}`);
   },
 });
 
 function fileFilter(req, file, cb) {
-  if (!ALLOWED_MIME.has(file.mimetype)) {
-    const err = new Error('Unsupported file type');
-    err.code = 'INVALID_FILE_TYPE';
-    return cb(err);
+  const ext = path.extname(file.originalname).slice(1).toLowerCase();
+
+  if (!ALLOWED_FORMATS.includes(ext)) {
+    return cb(new Error("File type not allowed"), false);
   }
   cb(null, true);
 }
@@ -44,15 +35,10 @@ function fileFilter(req, file, cb) {
 const upload = multer({
   storage,
   fileFilter,
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50 MB
-    files: 1,                   // single file per request
-  },
+  limits: { fileSize: 50 * 1024 * 1024 },
 });
 
 module.exports = {
-  uploadSingle: upload.single('file'), // client must send field name "file"
+  uploadSingle: upload.single("file"),
   UPLOAD_DIR,
-  ALLOWED_MIME,
 };
-

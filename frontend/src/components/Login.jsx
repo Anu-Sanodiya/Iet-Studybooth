@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { loginUser } from "../services/authService";
  import { toast } from "react-toastify";
@@ -10,6 +10,7 @@ const Login = () => {
 
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,8 +29,24 @@ const Login = () => {
     try {
       const data = await loginUser(formData); // Call backend
       login(data); // Save to context + localStorage
-       toast.success("🎉 Registration successful! Welcome!");
-      navigate("/"); // Redirect to Home or dashboard
+       toast.success("🎉 Login successful! Welcome!");
+
+      // If the login was triggered because the user requested a download,
+      // the previous page should have passed a `downloadId` in location.state.
+      const downloadId = location.state?.downloadId;
+      const from = location.state?.from || '/';
+
+      if (downloadId) {
+        // Open the download URL in a new tab
+        const url = `${import.meta.env.VITE_API_BASE_URL}/materials/${downloadId}/download`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        // Then navigate back to the originating page
+        navigate(from, { replace: true });
+        return;
+      }
+
+      // Default redirect (use from if provided)
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
         toast.error(err.response?.data?.message || "Registration failed");

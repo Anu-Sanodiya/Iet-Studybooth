@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Download, Search, XCircle, FileText, BookOpen, ArrowLeft,
   Laptop, Network, HardHat, Cog, CircuitBoard, Brain, Zap,
   UploadCloud, Home, PlusCircle
 } from 'lucide-react';
-import { getMaterials, uploadMaterial, downloadMaterial } from '../services/materialService';
+import { getMaterials, uploadMaterial, downloadMaterial, deleteMaterial } from '../services/materialService';
+import { AuthContext } from '../context/AuthContext';
 
 /* =========================
    Utilities
@@ -22,6 +24,17 @@ const getBranchIconName = (course = '') => {
   if (key.includes('business systems') || key.includes('csbs')) return 'csbs';
   return 'book';
 };
+const DEPARTMENTS_LIST = [
+  { label: 'Computer Science (CSE)', value: 'Computer Science (CSE)' },
+  { label: 'Information Technology (IT)', value: 'Information Technology (IT)' },
+  { label: 'Electronics & Communication (ECE)', value: 'Electronics & Communication (ECE)' },
+  { label: 'Electrical Engineering (EE)', value: 'Electrical Engineering (EE)' },
+  { label: 'Mechanical Engineering (ME)', value: 'Mechanical Engineering (ME)' },
+  { label: 'Civil Engineering (CE)', value: 'Civil Engineering (CE)' },
+  { label: 'Electronics & Instrumentation (E&I)', value: 'Electronics & Instrumentation (E&I)' },
+  { label: 'CS & Business Systems (CSBS)', value: 'CS & Business Systems (CSBS)' },
+  { label: 'Other / General', value: 'General' },
+];
 
 /* =========================
    Icons
@@ -119,11 +132,16 @@ const MaterialUploader = ({ departments, onUploaded, notify }) => {
     if (description) fd.append('description', description);
 
     setIsUploading(true);
-    try {
+   try {
       const { data } = await uploadMaterial(fd);
       notify('Material uploaded successfully!', 'success');
       onUploaded?.(data);
-      setSubject(''); setDescription(''); setSemester(''); setFile(null);
+      // Reset form
+      setSubject(''); 
+      setDescription(''); 
+      setSemester(''); 
+      setFile(null);
+      // Don't reset 'course' so they can upload another file to the same dept easily
       e.target.reset();
     } catch (err) {
       const msg = err?.response?.data?.message || err.message || 'Failed to upload material.';
@@ -133,74 +151,105 @@ const MaterialUploader = ({ departments, onUploaded, notify }) => {
     }
   };
 
-  return (
-    <div className="p-8 bg-white rounded-xl shadow-xl max-w-2xl mx-auto">
+ return (
+    <div className="p-8 bg-white rounded-xl shadow-xl max-w-2xl mx-auto border border-gray-100">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
         <PlusCircle className="w-7 h-7 mr-3 text-blue-600" />Upload New Study Material
       </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
+        
+        {/* --- NEW DEPARTMENT DROPDOWN --- */}
         <div>
-          <label htmlFor="course" className="block text-sm font-medium text-gray-700 mb-1">Course / Department</label>
-          <select
-            id="course"
-            value={course}
-            onChange={(e) => setCourse(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            {departments.map((d) => (<option key={d.name} value={d.name}>{d.name}</option>))}
-          </select>
+          <label htmlFor="course" className="block text-sm font-bold text-gray-700 mb-1">
+            Department / Branch *
+          </label>
+          <div className="relative">
+            <select
+              id="course"
+              value={course}
+              onChange={(e) => setCourse(e.target.value)}
+              className="w-full appearance-none border border-gray-300 rounded-lg px-4 py-3 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700 font-medium"
+            >
+              {DEPARTMENTS_LIST.map((dept) => (
+                <option key={dept.value} value={dept.value}>
+                  {dept.label}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+              <BookOpen className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Select the department this material belongs to.</p>
         </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-1">Semester (optional)</label>
+            <label htmlFor="semester" className="block text-sm font-bold text-gray-700 mb-1">Semester</label>
             <input
               id="semester"
               value={semester}
               onChange={(e) => setSemester(e.target.value)}
-              placeholder="e.g., 5"
+              placeholder="e.g. 5"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
-            <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
+            <label htmlFor="subject" className="block text-sm font-bold text-gray-700 mb-1">Subject Name *</label>
             <input
               id="subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g., DBMS"
+              placeholder="e.g. Data Structures"
               required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <label htmlFor="description" className="block text-sm font-bold text-gray-700 mb-1">Description</label>
           <textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
+            placeholder="Briefly describe the contents..."
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
         <div>
-          <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-1">File *</label>
-          <input
-            id="file-upload"
-            type="file"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            accept=".pdf,.ppt,.pptx,.pptm,.doc,.docx,.xls,.xlsx,.txt"
-            className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            required
-          />
+          <label htmlFor="file-upload" className="block text-sm font-bold text-gray-700 mb-1">File *</label>
+          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:bg-gray-50 transition">
+            <div className="space-y-1 text-center">
+              {file ? (
+                <div className="flex flex-col items-center text-green-600">
+                   <FileText className="w-10 h-10 mb-2"/>
+                   <span className="text-sm font-medium">{file.name}</span>
+                   <button type="button" onClick={() => setFile(null)} className="text-xs text-red-500 underline mt-2">Remove</button>
+                </div>
+              ) : (
+                <>
+                  <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="flex text-sm text-gray-600 justify-center">
+                    <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                      <span>Upload a file</span>
+                      <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={(e) => setFile(e.target.files?.[0] || null)} accept=".pdf,.ppt,.pptx,.doc,.docx,.txt" required />
+                    </label>
+                    <p className="pl-1">or drag and drop</p>
+                  </div>
+                  <p className="text-xs text-gray-500">PDF, PPT, DOC up to 10MB</p>
+                </>
+              )}
+            </div>
+          </div>
         </div>
         <button
           type="submit"
           disabled={isUploading}
-          className="w-full bg-blue-600 text-white font-semibold px-4 py-3 rounded-lg hover:bg-blue-700 transition shadow-md disabled:bg-gray-400 flex items-center justify-center"
+          className="w-full bg-blue-600 text-white font-bold px-4 py-3 rounded-lg hover:bg-blue-700 transition shadow-lg disabled:bg-gray-400 flex items-center justify-center transform hover:-translate-y-0.5"
         >
           {isUploading ? (
-            <><span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3" />Uploading…</>
+            <><span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3" />Uploading...</>
           ) : (
             <><UploadCloud className="w-5 h-5 mr-2" />Upload Material</>
           )}
@@ -224,7 +273,7 @@ const DepartmentCard = ({ branch, onClick }) => (
   </div>
 );
 
-const MaterialCard = ({ material, onDownload }) => (
+const MaterialCard = ({ material, onDownload, onDelete }) => (
   <div className="p-5 border border-gray-200 rounded-xl shadow-lg bg-white hover:shadow-xl transition flex flex-col">
     <div className="flex items-center mb-3">
       <FileIcon fileType={material.fileType} />
@@ -239,6 +288,14 @@ const MaterialCard = ({ material, onDownload }) => (
     >
       <Download className="w-5 h-5 mr-2" />Download
     </button>
+    {onDelete && (
+      <button
+        onClick={() => onDelete(material._id || material.id)}
+        className="w-full mt-2 bg-red-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 transition flex items-center justify-center shadow-md"
+      >
+        Delete
+      </button>
+    )}
   </div>
 );
 
@@ -249,6 +306,7 @@ const MaterialCard = ({ material, onDownload }) => (
 const DepartmentBrowser = ({
   departments,
   onDownload,
+  onDelete,
   globalQuery,
   onGlobalQueryChange,
   onGlobalSearchSubmit,
@@ -329,7 +387,7 @@ const DepartmentBrowser = ({
           {filteredSubjects.length ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredSubjects.map((s) => (
-                <MaterialCard key={s.id || s._id} material={s} onDownload={onDownload} />
+                <MaterialCard key={s.id || s._id} material={s} onDownload={onDownload} onDelete={onDelete} />
               ))}
             </div>
           ) : (
@@ -356,7 +414,7 @@ const DepartmentBrowser = ({
    StudyMaterials (receives
    materials from Browse)
 ========================= */
-const StudyMaterials = ({ materials, onDownload }) => {
+const StudyMaterials = ({ materials, onDownload, onDelete }) => {
   if (!materials?.length) {
     return null; // render nothing if nothing visible
   }
@@ -365,7 +423,7 @@ const StudyMaterials = ({ materials, onDownload }) => {
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Study Materials (from Browse)</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {materials.map((m) => (
-          <MaterialCard key={m.id || m._id} material={m} onDownload={onDownload} />
+          <MaterialCard key={m.id || m._id} material={m} onDownload={onDownload} onDelete={onDelete} />
         ))}
       </div>
     </div>
@@ -433,31 +491,39 @@ const StudyMaterialPortal = () => {
     fetchMaterials(globalSearchQuery);
   }, [fetchMaterials, globalSearchQuery]);
 
-  const handleDownload = async (id, fallbackName) => {
+  const { user } = useContext(AuthContext);
+  const isAdmin = (user?.role || '').toString().toLowerCase() === 'admin';
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this material? This cannot be undone.')) return;
     try {
-      notify('Initiating download…', 'info');
-      const res = await downloadMaterial(id); // Axios/fetch wrapper should return { data: Blob, headers: {...} }
-      const contentType = res.headers?.['content-type'] || 'application/octet-stream';
-      const blob = new Blob([res.data], { type: contentType });
-
-      // Try to get filename from header
-      const cd = res.headers?.['content-disposition'] || '';
-      const match = cd.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
-      const filename = decodeURIComponent(match?.[1] || match?.[2] || '') || fallbackName || 'material';
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      notify('Download complete!', 'success');
-    } catch (e) {
-      notify(e?.response?.data?.message || e.message || 'Download failed.', 'error');
+      await deleteMaterial(id);
+      notify('Deleted successfully', 'success');
+      // refresh list
+      await fetchMaterials(globalSearchQuery);
+    } catch (err) {
+      notify(err?.response?.data?.message || err.message || 'Delete failed', 'error');
     }
   };
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+ const handleDownload = (id) => {
+  // If not logged in as any user, navigate to student login with download intent
+  if (!user) {
+    navigate('/login', { state: { downloadId: id, from: location.pathname } });
+    return;
+  }
+
+  notify("Preparing download…", "info");
+
+  const downloadUrl = `${import.meta.env.VITE_API_BASE_URL}/materials/${id}/download`;
+  console.log("Download URL:", downloadUrl);
+  // Let the browser handle the redirect → signed Cloudinary link → download
+  window.open(downloadUrl, "_blank", "noopener,noreferrer");
+};
+
 
   const handleMaterialUploaded = () => {
     // refresh and switch back to browse
@@ -485,6 +551,7 @@ const StudyMaterialPortal = () => {
             <DepartmentBrowser
               departments={departments}
               onDownload={handleDownload}
+              onDelete={isAdmin ? handleDelete : undefined}
               globalQuery={globalSearchQuery}
               onGlobalQueryChange={setGlobalSearchQuery}
               onGlobalSearchSubmit={() => fetchMaterials(globalSearchQuery)}
@@ -495,6 +562,7 @@ const StudyMaterialPortal = () => {
             <StudyMaterials
               materials={visibleMaterials}
               onDownload={handleDownload}
+              onDelete={isAdmin ? handleDelete : undefined}
             />
           </>
         ) : (

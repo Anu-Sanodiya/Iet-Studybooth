@@ -1,5 +1,10 @@
-import { createContext, useState, useEffect } from "react";
-import { logoutUser as apiLogoutUser } from "../services/authService";
+ import { createContext, useState, useEffect } from "react";
+
+import { 
+  logoutUser as apiLogoutUser,
+  loginAdmin as apiLoginAdmin,
+  registerAdmin as apiRegisterAdmin
+} from "../services/authService";
 
 // Create context
 export const AuthContext = createContext();
@@ -11,29 +16,37 @@ const AuthProvider = ({ children }) => {
   // Load user from localStorage on refresh
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("token");
+    const storedToken = localStorage.getItem("token"); // Check for token too if needed logic depends on it
+    
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user from local storage");
+        localStorage.removeItem("user"); // Cleanup if corrupt
+      }
     }
     setLoading(false);
   }, []);
 
-  // Login handler
-   // Login handler
-  // This function receives the data from the backend
- const login = (data) => {
-   // Backend returns { success, token, user }
-   if (!data) return;
-   const userData = data.user || data;
-   const token = data.token;
+  // Login handler (State Updater)
+  const login = (data) => {
+    // Backend returns { success, token, user } OR just { user, token }
+    if (!data) return;
+    
+    // Handle nested 'user' object or flat structure
+    const userData = data.user || data;
+    const token = data.token;
 
-   // Persist token (used by API request interceptor) and user
-   if (token) {
-    localStorage.setItem("token", token);
-   }
-   setUser(userData);
-   localStorage.setItem("user", JSON.stringify(userData));
- };
+    // Persist token (used by API request interceptor)
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+    
+    // Persist User
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
 
   // Logout handler
   const logout = async () => {
@@ -50,8 +63,27 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
   };
 
+  // --- Admin Specific Actions ---
+
+  const adminLogin = async (formData) => {
+    // 1. Call API
+    const data = await apiLoginAdmin(formData);
+    // 2. Update State
+    login(data);
+    return data;
+  };
+
+  const adminRegister = async (formData) => {
+    // 1. Call API
+    const data = await apiRegisterAdmin(formData);
+    // Note: We usually DO NOT auto-login after admin register 
+    // as it might require manual approval or email verification.
+    // But if your logic allows it, you could call login(data) here.
+    return data;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, adminLogin, adminRegister, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );
